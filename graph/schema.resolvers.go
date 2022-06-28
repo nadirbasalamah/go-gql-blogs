@@ -5,10 +5,23 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/nadirbasalamah/go-gql-blogs/graph/generated"
 	"github.com/nadirbasalamah/go-gql-blogs/graph/model"
 )
+
+func (r *mutationResolver) Register(ctx context.Context, input model.NewUser) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) Login(ctx context.Context, input model.LoginInput) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) RefreshToken(ctx context.Context, input model.RefreshTokenInput) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 
 func (r *mutationResolver) NewBlog(ctx context.Context, input model.NewBlog) (*model.Blog, error) {
 	var blog *model.Blog = r.blogService.CreateBlog(input)

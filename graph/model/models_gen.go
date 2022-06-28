@@ -6,6 +6,7 @@ type Blog struct {
 	ID      string `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
+	Author  *User  `json:"author"`
 }
 
 type DeleteBlog struct {
@@ -18,7 +19,29 @@ type EditBlog struct {
 	Content string `json:"content"`
 }
 
+type LoginInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type NewBlog struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
+}
+
+type NewUser struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type RefreshTokenInput struct {
+	Token string `json:"token"`
+}
+
+type User struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }

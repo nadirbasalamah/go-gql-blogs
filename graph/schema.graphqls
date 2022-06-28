@@ -2,11 +2,34 @@ type Blog {
   id: ID!
   title: String!
   content: String!
+  author: User
+}
+
+type User {
+  id: ID!
+  username: String!
+  email: String!
+  password: String!
 }
 
 type Query {
   blogs: [Blog!]!
   blog(id: ID!): Blog!
+}
+
+input NewUser {
+  username: String!
+  email: String!
+  password: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input RefreshTokenInput {
+  token: String!
 }
 
 input NewBlog {
@@ -25,6 +48,9 @@ input DeleteBlog {
 }
 
 type Mutation {
+  register(input: NewUser!): String!
+  login(input: LoginInput!): String!
+  refreshToken(input: RefreshTokenInput!): String!
   newBlog(input: NewBlog!): Blog!
   editBlog(input: EditBlog!): Blog!
   deleteBlog(input: DeleteBlog!): Boolean!
