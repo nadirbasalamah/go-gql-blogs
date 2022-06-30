@@ -43,7 +43,12 @@ func (r *mutationResolver) NewBlog(ctx context.Context, input model.NewBlog) (*m
 		return &model.Blog{}, errors.New("access denied")
 	}
 
-	var blog *model.Blog = r.blogService.CreateBlog(input)
+	blog, err := r.blogService.CreateBlog(input)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return blog, nil
 }
 

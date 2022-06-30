@@ -31,6 +31,7 @@ func (b *BlogService) GetAllBlogs() []*model.Blog {
 
 	return blogs
 }
+
 func (b *BlogService) GetBlogByID(id string) (*model.Blog, error) {
 	blogID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -47,7 +48,8 @@ func (b *BlogService) GetBlogByID(id string) (*model.Blog, error) {
 
 	return blog, nil
 }
-func (b *BlogService) CreateBlog(input model.NewBlog) *model.Blog {
+
+func (b *BlogService) CreateBlog(input model.NewBlog) (*model.Blog, error) {
 	var blog model.Blog = model.Blog{
 		Title:   input.Title,
 		Content: input.Content,
@@ -58,7 +60,7 @@ func (b *BlogService) CreateBlog(input model.NewBlog) *model.Blog {
 	result, err := collection.InsertOne(context.TODO(), blog)
 
 	if err != nil {
-		return &model.Blog{}
+		return &model.Blog{}, errors.New("create blog failed")
 	}
 
 	var filter primitive.D = bson.D{{Key: "_id", Value: result.InsertedID}}
@@ -68,9 +70,10 @@ func (b *BlogService) CreateBlog(input model.NewBlog) *model.Blog {
 
 	createdRecord.Decode(createdBlog)
 
-	return createdBlog
+	return createdBlog, nil
 
 }
+
 func (b *BlogService) EditBlog(input model.EditBlog) (*model.Blog, error) {
 	blogID, err := primitive.ObjectIDFromHex(input.BlogID)
 	if err != nil {
