@@ -3,45 +3,45 @@
 package model
 
 type Blog struct {
-	ID      string `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	Author  *User  `json:"author"`
+	ID      string `json:"id" bson:"_id"`
+	Title   string `json:"title" bson:"title"`
+	Content string `json:"content" bson:"content"`
+	Author  *User  `json:"author" bson:"author"`
 }
 
 type DeleteBlog struct {
-	BlogID string `json:"blogId"`
+	BlogID string `json:"blogId" bson:"blogId"`
 }
 
 type EditBlog struct {
-	BlogID  string `json:"blogId"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	BlogID  string `json:"blogId" bson:"blogId"`
+	Title   string `json:"title" bson:"title"`
+	Content string `json:"content" bson:"content"`
 }
 
 type LoginInput struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" bson:"email"`
+	Password string `json:"password" bson:"password"`
 }
 
 type NewBlog struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	Title   string `json:"title" bson:"title"`
+	Content string `json:"content" bson:"content"`
 }
 
 type NewUser struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Username string `json:"username" bson:"username"`
+	Email    string `json:"email" bson:"email"`
+	Password string `json:"password" bson:"password"`
 }
 
 type RefreshTokenInput struct {
-	Token string `json:"token"`
+	Token string `json:"token" bson:"token"`
 }
 
 type User struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	ID       string `json:"id" bson:"_id"`
+	Username string `json:"username" bson:"username"`
+	Email    string `json:"email" bson:"email"`
+	Password string `json:"password" bson:"password"`
 }

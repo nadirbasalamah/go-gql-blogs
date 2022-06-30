@@ -1,62 +1,119 @@
 package service
 
 import (
+	"context"
 	"errors"
 
-	"github.com/google/uuid"
+	"github.com/nadirbasalamah/go-gql-blogs/database"
 	"github.com/nadirbasalamah/go-gql-blogs/graph/model"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type BlogService struct{}
 
-var storage []*model.Blog
-
 func (b *BlogService) GetAllBlogs() []*model.Blog {
-	return storage
-}
-func (b *BlogService) GetBlogByID(id string) (*model.Blog, error) {
-	for _, blog := range storage {
-		if blog.ID == id {
-			return blog, nil
-		}
+	var query primitive.D = bson.D{{}}
+
+	cursor, err := database.GetCollection("blogs").Find(context.TODO(), query)
+	if err != nil {
+		return []*model.Blog{}
 	}
 
-	return &model.Blog{}, errors.New("blog not found")
+	var blogs []*model.Blog = make([]*model.Blog, 0)
+
+	if err := cursor.All(context.TODO(), &blogs); err != nil {
+		return []*model.Blog{}
+	}
+
+	return blogs
+}
+func (b *BlogService) GetBlogByID(id string) (*model.Blog, error) {
+	blogID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return &model.Blog{}, errors.New("blog not found")
+	}
+
+	var query primitive.D = bson.D{{Key: "_id", Value: blogID}}
+	var collection *mongo.Collection = database.GetCollection("blogs")
+
+	var blogData *mongo.SingleResult = collection.FindOne(context.TODO(), query)
+
+	var blog *model.Blog = &model.Blog{}
+	blogData.Decode(blog)
+
+	return blog, nil
 }
 func (b *BlogService) CreateBlog(input model.NewBlog) *model.Blog {
 	var blog model.Blog = model.Blog{
-		ID:      uuid.New().String(),
 		Title:   input.Title,
 		Content: input.Content,
 	}
 
-	storage = append(storage, &blog)
+	var collection *mongo.Collection = database.GetCollection("blogs")
 
-	return &blog
-}
-func (b *BlogService) EditBlog(input model.EditBlog) (*model.Blog, error) {
-	for _, blog := range storage {
-		if blog.ID == input.BlogID {
-			blog.Title = input.Title
-			blog.Content = input.Content
+	result, err := collection.InsertOne(context.TODO(), blog)
 
-			return blog, nil
-		}
+	if err != nil {
+		return &model.Blog{}
 	}
 
-	return nil, errors.New("blog not found")
+	var filter primitive.D = bson.D{{Key: "_id", Value: result.InsertedID}}
+	var createdRecord *mongo.SingleResult = collection.FindOne(context.TODO(), filter)
+
+	var createdBlog *model.Blog = &model.Blog{}
+
+	createdRecord.Decode(createdBlog)
+
+	return createdBlog
+
+}
+func (b *BlogService) EditBlog(input model.EditBlog) (*model.Blog, error) {
+	blogID, err := primitive.ObjectIDFromHex(input.BlogID)
+	if err != nil {
+		return &model.Blog{}, errors.New("id is invalid")
+	}
+
+	var query primitive.D = bson.D{{Key: "_id", Value: blogID}}
+	var update primitive.D = bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "title", Value: input.Title},
+			{Key: "content", Value: input.Content},
+		},
+	}}
+
+	var collection *mongo.Collection = database.GetCollection("blogs")
+
+	var updateResult *mongo.SingleResult = collection.FindOneAndUpdate(context.TODO(), query, update)
+
+	if updateResult.Err() != nil {
+		if err == mongo.ErrNoDocuments {
+			return &model.Blog{}, errors.New("blog not found")
+		}
+		return &model.Blog{}, errors.New("update blog failed")
+	}
+
+	blog, _ := b.GetBlogByID(input.BlogID)
+	return blog, nil
 }
 
 func (b *BlogService) DeleteBlog(input model.DeleteBlog) bool {
-	var afterDeleted []*model.Blog = []*model.Blog{}
-
-	for _, blog := range storage {
-		if blog.ID != input.BlogID {
-			afterDeleted = append(afterDeleted, blog)
-		}
+	blogID, err := primitive.ObjectIDFromHex(input.BlogID)
+	if err != nil {
+		return false
 	}
 
-	storage = afterDeleted
+	var query primitive.D = bson.D{{Key: "_id", Value: blogID}}
+	var collection *mongo.Collection = database.GetCollection("blogs")
+
+	result, err := collection.DeleteOne(context.TODO(), query)
+	var isFailed bool = err != nil || result.DeletedCount < 1
+
+	if isFailed {
+		return !isFailed
+	}
 
 	return true
 }
