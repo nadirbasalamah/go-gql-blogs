@@ -3,7 +3,7 @@
 package model
 
 type Blog struct {
-	ID      string `json:"id" bson:"_id"`
+	ID      string `json:"id" bson:"_id,omitempty"`
 	Title   string `json:"title" bson:"title"`
 	Content string `json:"content" bson:"content"`
 	Author  *User  `json:"author" bson:"author"`
@@ -40,7 +40,7 @@ type RefreshTokenInput struct {
 }
 
 type User struct {
-	ID       string `json:"id" bson:"_id"`
+	ID       string `json:"id" bson:"_id,omitempty"`
 	Username string `json:"username" bson:"username"`
 	Email    string `json:"email" bson:"email"`
 	Password string `json:"password" bson:"password"`
