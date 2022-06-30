@@ -10,4 +10,5 @@ import (
 
 type Resolver struct {
 	blogService service.BlogService
+	userService service.UserService
 }

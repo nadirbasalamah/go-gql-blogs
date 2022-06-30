@@ -5,18 +5,32 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/nadirbasalamah/go-gql-blogs/graph/generated"
+	"github.com/nadirbasalamah/go-gql-blogs/graph/middleware"
 	"github.com/nadirbasalamah/go-gql-blogs/graph/model"
 )
 
 func (r *mutationResolver) Register(ctx context.Context, input model.NewUser) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	var token string = r.userService.Register(input)
+
+	if token == "" {
+		return "", errors.New("registration failed")
+	}
+
+	return token, nil
 }
 
 func (r *mutationResolver) Login(ctx context.Context, input model.LoginInput) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	var token string = r.userService.Login(input)
+
+	if token == "" {
+		return "", errors.New("login failed, invalid email or password")
+	}
+
+	return token, nil
 }
 
 func (r *mutationResolver) RefreshToken(ctx context.Context, input model.RefreshTokenInput) (string, error) {
@@ -24,6 +38,11 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 }
 
 func (r *mutationResolver) NewBlog(ctx context.Context, input model.NewBlog) (*model.Blog, error) {
+	user := middleware.ForContext(ctx)
+	if user == nil {
+		return &model.Blog{}, errors.New("access denied")
+	}
+
 	var blog *model.Blog = r.blogService.CreateBlog(input)
 	return blog, nil
 }

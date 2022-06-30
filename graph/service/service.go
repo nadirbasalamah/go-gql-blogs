@@ -13,10 +13,12 @@ import (
 
 type BlogService struct{}
 
+const BLOG_COLLECTION = "blogs"
+
 func (b *BlogService) GetAllBlogs() []*model.Blog {
 	var query primitive.D = bson.D{{}}
 
-	cursor, err := database.GetCollection("blogs").Find(context.TODO(), query)
+	cursor, err := database.GetCollection(BLOG_COLLECTION).Find(context.TODO(), query)
 	if err != nil {
 		return []*model.Blog{}
 	}
@@ -36,7 +38,7 @@ func (b *BlogService) GetBlogByID(id string) (*model.Blog, error) {
 	}
 
 	var query primitive.D = bson.D{{Key: "_id", Value: blogID}}
-	var collection *mongo.Collection = database.GetCollection("blogs")
+	var collection *mongo.Collection = database.GetCollection(BLOG_COLLECTION)
 
 	var blogData *mongo.SingleResult = collection.FindOne(context.TODO(), query)
 
@@ -51,7 +53,7 @@ func (b *BlogService) CreateBlog(input model.NewBlog) *model.Blog {
 		Content: input.Content,
 	}
 
-	var collection *mongo.Collection = database.GetCollection("blogs")
+	var collection *mongo.Collection = database.GetCollection(BLOG_COLLECTION)
 
 	result, err := collection.InsertOne(context.TODO(), blog)
 
@@ -84,7 +86,7 @@ func (b *BlogService) EditBlog(input model.EditBlog) (*model.Blog, error) {
 		},
 	}}
 
-	var collection *mongo.Collection = database.GetCollection("blogs")
+	var collection *mongo.Collection = database.GetCollection(BLOG_COLLECTION)
 
 	var updateResult *mongo.SingleResult = collection.FindOneAndUpdate(context.TODO(), query, update)
 
@@ -106,7 +108,7 @@ func (b *BlogService) DeleteBlog(input model.DeleteBlog) bool {
 	}
 
 	var query primitive.D = bson.D{{Key: "_id", Value: blogID}}
-	var collection *mongo.Collection = database.GetCollection("blogs")
+	var collection *mongo.Collection = database.GetCollection(BLOG_COLLECTION)
 
 	result, err := collection.DeleteOne(context.TODO(), query)
 	var isFailed bool = err != nil || result.DeletedCount < 1
