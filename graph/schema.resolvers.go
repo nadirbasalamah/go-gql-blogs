@@ -6,7 +6,6 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/nadirbasalamah/go-gql-blogs/graph/generated"
 	"github.com/nadirbasalamah/go-gql-blogs/graph/middleware"
@@ -31,10 +30,6 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginInput) (s
 	}
 
 	return token, nil
-}
-
-func (r *mutationResolver) RefreshToken(ctx context.Context, input model.RefreshTokenInput) (string, error) {
-	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *mutationResolver) NewBlog(ctx context.Context, input model.NewBlog) (*model.Blog, error) {

@@ -28,10 +28,6 @@ input LoginInput {
   password: String!
 }
 
-input RefreshTokenInput {
-  token: String!
-}
-
 input NewBlog {
   title: String!
   content: String!
@@ -50,7 +46,6 @@ input DeleteBlog {
 type Mutation {
   register(input: NewUser!): String!
   login(input: LoginInput!): String!
-  refreshToken(input: RefreshTokenInput!): String!
   newBlog(input: NewBlog!): Blog!
   editBlog(input: EditBlog!): Blog!
   deleteBlog(input: DeleteBlog!): Boolean!
