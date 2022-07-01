@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type BlogService struct{}
@@ -49,10 +50,11 @@ func (b *BlogService) GetBlogByID(id string) (*model.Blog, error) {
 	return blog, nil
 }
 
-func (b *BlogService) CreateBlog(input model.NewBlog) (*model.Blog, error) {
+func (b *BlogService) CreateBlog(input model.NewBlog, user model.User) (*model.Blog, error) {
 	var blog model.Blog = model.Blog{
 		Title:   input.Title,
 		Content: input.Content,
+		Author:  &user,
 	}
 
 	var collection *mongo.Collection = database.GetCollection(BLOG_COLLECTION)
@@ -74,13 +76,16 @@ func (b *BlogService) CreateBlog(input model.NewBlog) (*model.Blog, error) {
 
 }
 
-func (b *BlogService) EditBlog(input model.EditBlog) (*model.Blog, error) {
+func (b *BlogService) EditBlog(input model.EditBlog, user model.User) (*model.Blog, error) {
 	blogID, err := primitive.ObjectIDFromHex(input.BlogID)
 	if err != nil {
 		return &model.Blog{}, errors.New("id is invalid")
 	}
 
-	var query primitive.D = bson.D{{Key: "_id", Value: blogID}}
+	var query primitive.D = bson.D{
+		{Key: "_id", Value: blogID},
+		{Key: "author._id", Value: user.ID},
+	}
 	var update primitive.D = bson.D{{
 		Key: "$set",
 		Value: bson.D{
@@ -91,7 +96,12 @@ func (b *BlogService) EditBlog(input model.EditBlog) (*model.Blog, error) {
 
 	var collection *mongo.Collection = database.GetCollection(BLOG_COLLECTION)
 
-	var updateResult *mongo.SingleResult = collection.FindOneAndUpdate(context.TODO(), query, update)
+	var updateResult *mongo.SingleResult = collection.FindOneAndUpdate(
+		context.TODO(),
+		query,
+		update,
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	)
 
 	if updateResult.Err() != nil {
 		if err == mongo.ErrNoDocuments {
@@ -100,17 +110,24 @@ func (b *BlogService) EditBlog(input model.EditBlog) (*model.Blog, error) {
 		return &model.Blog{}, errors.New("update blog failed")
 	}
 
-	blog, _ := b.GetBlogByID(input.BlogID)
-	return blog, nil
+	var editedBlog *model.Blog = &model.Blog{}
+
+	updateResult.Decode(editedBlog)
+
+	return editedBlog, nil
 }
 
-func (b *BlogService) DeleteBlog(input model.DeleteBlog) bool {
+func (b *BlogService) DeleteBlog(input model.DeleteBlog, user model.User) bool {
 	blogID, err := primitive.ObjectIDFromHex(input.BlogID)
 	if err != nil {
 		return false
 	}
 
-	var query primitive.D = bson.D{{Key: "_id", Value: blogID}}
+	var query primitive.D = bson.D{
+		{Key: "_id", Value: blogID},
+		{Key: "author._id", Value: user.ID},
+	}
+
 	var collection *mongo.Collection = database.GetCollection(BLOG_COLLECTION)
 
 	result, err := collection.DeleteOne(context.TODO(), query)

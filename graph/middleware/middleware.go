@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/nadirbasalamah/go-gql-blogs/graph/model"
+	"github.com/nadirbasalamah/go-gql-blogs/graph/service"
 	"github.com/nadirbasalamah/go-gql-blogs/utils"
 )
 
@@ -27,13 +28,20 @@ func NewMiddleware() func(http.Handler) http.Handler {
 			tokenData, err := utils.CheckToken(r)
 
 			if err != nil {
-				http.Error(w, "Invalid Token", http.StatusForbidden)
+				http.Error(w, "invalid token", http.StatusForbidden)
 				return
 			}
 
-			var user model.User = model.User{
-				ID: tokenData.UserId,
+			var userService service.UserService = service.UserService{}
+
+			userData, err := userService.GetUser(tokenData.UserId)
+
+			if err != nil {
+				http.Error(w, "user not found", http.StatusForbidden)
+				return
 			}
+
+			var user model.User = *userData
 
 			ctx := context.WithValue(r.Context(), userCtxKey, &user)
 

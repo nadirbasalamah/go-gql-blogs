@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/nadirbasalamah/go-gql-blogs/database"
 	"github.com/nadirbasalamah/go-gql-blogs/graph/model"
@@ -72,4 +73,21 @@ func (u *UserService) Login(input model.LoginInput) string {
 	}
 
 	return token
+}
+
+func (u *UserService) GetUser(id string) (*model.User, error) {
+	userID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return &model.User{}, errors.New("user not found")
+	}
+
+	var query primitive.D = bson.D{{Key: "_id", Value: userID}}
+	var collection *mongo.Collection = database.GetCollection(USER_COLLECTION)
+
+	var userData *mongo.SingleResult = collection.FindOne(context.TODO(), query)
+
+	var user *model.User = &model.User{}
+	userData.Decode(user)
+
+	return user, nil
 }

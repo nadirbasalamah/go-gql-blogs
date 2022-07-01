@@ -43,7 +43,7 @@ func (r *mutationResolver) NewBlog(ctx context.Context, input model.NewBlog) (*m
 		return &model.Blog{}, errors.New("access denied")
 	}
 
-	blog, err := r.blogService.CreateBlog(input)
+	blog, err := r.blogService.CreateBlog(input, *user)
 
 	if err != nil {
 		return nil, err
@@ -53,7 +53,12 @@ func (r *mutationResolver) NewBlog(ctx context.Context, input model.NewBlog) (*m
 }
 
 func (r *mutationResolver) EditBlog(ctx context.Context, input model.EditBlog) (*model.Blog, error) {
-	blog, err := r.blogService.EditBlog(input)
+	user := middleware.ForContext(ctx)
+	if user == nil {
+		return &model.Blog{}, errors.New("access denied")
+	}
+
+	blog, err := r.blogService.EditBlog(input, *user)
 	if err != nil {
 		return &model.Blog{}, err
 	}
@@ -62,7 +67,12 @@ func (r *mutationResolver) EditBlog(ctx context.Context, input model.EditBlog) (
 }
 
 func (r *mutationResolver) DeleteBlog(ctx context.Context, input model.DeleteBlog) (bool, error) {
-	var result bool = r.blogService.DeleteBlog(input)
+	user := middleware.ForContext(ctx)
+	if user == nil {
+		return false, errors.New("access denied")
+	}
+
+	var result bool = r.blogService.DeleteBlog(input, *user)
 
 	return result, nil
 }
