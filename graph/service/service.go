@@ -36,13 +36,17 @@ func (b *BlogService) GetAllBlogs() []*model.Blog {
 func (b *BlogService) GetBlogByID(id string) (*model.Blog, error) {
 	blogID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return &model.Blog{}, errors.New("blog not found")
+		return &model.Blog{}, errors.New("id is invalid")
 	}
 
 	var query primitive.D = bson.D{{Key: "_id", Value: blogID}}
 	var collection *mongo.Collection = database.GetCollection(BLOG_COLLECTION)
 
 	var blogData *mongo.SingleResult = collection.FindOne(context.TODO(), query)
+
+	if blogData.Err() != nil {
+		return &model.Blog{}, errors.New("blog not found")
+	}
 
 	var blog *model.Blog = &model.Blog{}
 	blogData.Decode(blog)

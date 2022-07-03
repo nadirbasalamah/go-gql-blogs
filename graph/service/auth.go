@@ -78,13 +78,17 @@ func (u *UserService) Login(input model.LoginInput) string {
 func (u *UserService) GetUser(id string) (*model.User, error) {
 	userID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return &model.User{}, errors.New("user not found")
+		return &model.User{}, errors.New("id is invalid")
 	}
 
 	var query primitive.D = bson.D{{Key: "_id", Value: userID}}
 	var collection *mongo.Collection = database.GetCollection(USER_COLLECTION)
 
 	var userData *mongo.SingleResult = collection.FindOne(context.TODO(), query)
+
+	if userData.Err() != nil {
+		return &model.User{}, errors.New("user not found")
+	}
 
 	var user *model.User = &model.User{}
 	userData.Decode(user)
