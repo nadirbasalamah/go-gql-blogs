@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/nadirbasalamah/go-gql-blogs/database"
 	"github.com/nadirbasalamah/go-gql-blogs/graph/model"
@@ -26,9 +27,10 @@ func (u *UserService) Register(input model.NewUser) string {
 	var password string = string(bs)
 
 	var user model.User = model.User{
-		Username: input.Username,
-		Email:    input.Email,
-		Password: password,
+		Username:  input.Username,
+		Email:     input.Email,
+		Password:  password,
+		CreatedAt: time.Now(),
 	}
 
 	var collection *mongo.Collection = database.GetCollection(USER_COLLECTION)

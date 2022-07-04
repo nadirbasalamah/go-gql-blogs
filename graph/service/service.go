@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/nadirbasalamah/go-gql-blogs/database"
 	"github.com/nadirbasalamah/go-gql-blogs/graph/model"
@@ -19,7 +20,10 @@ const BLOG_COLLECTION = "blogs"
 func (b *BlogService) GetAllBlogs() []*model.Blog {
 	var query primitive.D = bson.D{{}}
 
-	cursor, err := database.GetCollection(BLOG_COLLECTION).Find(context.TODO(), query)
+	var findOptions *options.FindOptions = options.Find()
+	findOptions.SetSort(bson.D{{Key: "createdAt", Value: -1}})
+
+	cursor, err := database.GetCollection(BLOG_COLLECTION).Find(context.TODO(), query, findOptions)
 	if err != nil {
 		return []*model.Blog{}
 	}
@@ -56,9 +60,10 @@ func (b *BlogService) GetBlogByID(id string) (*model.Blog, error) {
 
 func (b *BlogService) CreateBlog(input model.NewBlog, user model.User) (*model.Blog, error) {
 	var blog model.Blog = model.Blog{
-		Title:   input.Title,
-		Content: input.Content,
-		Author:  &user,
+		Title:     input.Title,
+		Content:   input.Content,
+		Author:    &user,
+		CreatedAt: time.Now(),
 	}
 
 	var collection *mongo.Collection = database.GetCollection(BLOG_COLLECTION)
@@ -95,6 +100,7 @@ func (b *BlogService) EditBlog(input model.EditBlog, user model.User) (*model.Bl
 		Value: bson.D{
 			{Key: "title", Value: input.Title},
 			{Key: "content", Value: input.Content},
+			{Key: "updatedAt", Value: time.Now()},
 		},
 	}}
 
