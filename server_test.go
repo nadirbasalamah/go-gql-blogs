@@ -66,8 +66,15 @@ func getUser() model.User {
 	return user
 }
 
+func cleanup(res *http.Response, req *http.Request, apiTest *apitest.APITest) {
+	if http.StatusOK == res.StatusCode {
+		database.CleanSeeders()
+	}
+}
+
 func TestSignup_Success(t *testing.T) {
 	apitest.New().
+		Observe(cleanup).
 		Handler(graphQLHandler()).
 		Post("/query").
 		GraphQLQuery(`mutation {
@@ -97,11 +104,43 @@ func TestLogin_Success(t *testing.T) {
 	}`
 
 	apitest.New().
+		Observe(cleanup).
 		Handler(graphQLHandler()).
 		Post("/query").
 		GraphQLQuery(query).
 		Expect(t).
 		Status(http.StatusOK).
+		End()
+}
+
+func TestLogin_Failed(t *testing.T) {
+	var result string = `{
+		"errors": [
+			{
+				"message": "login failed, invalid email or password",
+				"path": [
+					"login"
+				]
+			}
+		],
+		"data": null
+	}`
+
+	var query string = `mutation {
+		login(input:{
+			email:"wrong@mail.com",
+			password:"123456"
+		})
+	}`
+
+	apitest.New().
+		Observe(cleanup).
+		Handler(graphQLHandler()).
+		Post("/query").
+		GraphQLQuery(query).
+		Expect(t).
+		Status(http.StatusOK).
+		Body(result).
 		End()
 }
 
@@ -122,17 +161,57 @@ func TestGetBlog_Success(t *testing.T) {
 		blog(id:"` + blog.ID + `") {
 			title
 			content
-			createdAt
-			updatedAt
+		}
+	}`
+
+	var result string = `{
+		"data": {
+			"blog": {
+				"title": "` + blog.Title + `",
+				"content": "` + blog.Content + `"
+			}
 		}
 	}`
 
 	apitest.New().
+		Observe(cleanup).
 		Handler(graphQLHandler()).
 		Post("/query").
 		GraphQLQuery(query).
 		Expect(t).
 		Status(http.StatusOK).
+		Body(result).
+		End()
+}
+
+func TestGetBlog_Failed(t *testing.T) {
+	var query string = `query {
+		blog(id:"62c24f3b4896bb25c21e49b9") {
+			title
+			content
+		}
+	}`
+
+	var result string = `{
+		"errors": [
+			{
+				"message": "blog not found",
+				"path": [
+					"blog"
+				]
+			}
+		],
+		"data": null
+	}`
+
+	apitest.New().
+		Observe(cleanup).
+		Handler(graphQLHandler()).
+		Post("/query").
+		GraphQLQuery(query).
+		Expect(t).
+		Status(http.StatusOK).
+		Body(result).
 		End()
 }
 
@@ -145,17 +224,195 @@ func TestCreateBlog_Success(t *testing.T) {
 			title:"my blog",
 			content:"this is the content"
 		}) {
-			id
 			title
+			content
+		}
+	}`
+
+	var result string = `{
+		"data": {
+			"newBlog": {
+				"title": "my blog",
+				"content": "this is the content"
+			}
 		}
 	}`
 
 	apitest.New().
+		Observe(cleanup).
 		Handler(graphQLHandler()).
 		Post("/query").
 		Header("Authorization", token).
 		GraphQLQuery(query).
 		Expect(t).
 		Status(http.StatusOK).
+		Body(result).
+		End()
+}
+
+func TestCreateBlog_Failed(t *testing.T) {
+	var query string = `mutation {
+		newBlog(input:{
+			title:"my blog",
+			content:"this is the content"
+		}) {
+			title
+			content
+		}
+	}`
+
+	var result string = `{
+		"errors": [
+			{
+				"message": "access denied",
+				"path": [
+					"newBlog"
+				]
+			}
+		],
+		"data": null
+	}`
+
+	apitest.New().
+		Observe(cleanup).
+		Handler(graphQLHandler()).
+		Post("/query").
+		GraphQLQuery(query).
+		Expect(t).
+		Status(http.StatusOK).
+		Body(result).
+		End()
+}
+
+func TestEditBlog_Success(t *testing.T) {
+	var blog model.Blog = getBlog()
+	var token string = getJWTToken(*blog.Author)
+
+	var query string = `mutation {
+		editBlog(input:{
+			blogId:"` + blog.ID + `"
+			title:"my blog",
+			content:"this is the content"
+		}) {
+			title
+			content
+		}
+	}`
+
+	var result string = `{
+		"data": {
+			"editBlog": {
+				"title": "my blog",
+				"content": "this is the content"
+			}
+		}
+	}`
+
+	apitest.New().
+		Observe(cleanup).
+		Handler(graphQLHandler()).
+		Post("/query").
+		Header("Authorization", token).
+		GraphQLQuery(query).
+		Expect(t).
+		Status(http.StatusOK).
+		Body(result).
+		End()
+}
+
+func TestEditBlog_Failed(t *testing.T) {
+	var blog model.Blog = getBlog()
+
+	var query string = `mutation {
+		editBlog(input:{
+			blogId:"` + blog.ID + `"
+			title:"my blog",
+			content:"this is the content"
+		}) {
+			title
+			content
+		}
+	}`
+
+	var result string = `{
+		"errors": [
+			{
+				"message": "access denied",
+				"path": [
+					"editBlog"
+				]
+			}
+		],
+		"data": null
+	}`
+
+	apitest.New().
+		Observe(cleanup).
+		Handler(graphQLHandler()).
+		Post("/query").
+		GraphQLQuery(query).
+		Expect(t).
+		Status(http.StatusOK).
+		Body(result).
+		End()
+}
+
+func TestDeleteBlog_Success(t *testing.T) {
+	var blog model.Blog = getBlog()
+	var token string = getJWTToken(*blog.Author)
+
+	var query string = `mutation {
+		deleteBlog(input:{
+			blogId:"` + blog.ID + `"
+		})
+	}`
+
+	var result string = `{
+		"data": {
+			"deleteBlog": true
+		}
+	}`
+
+	apitest.New().
+		Observe(cleanup).
+		Handler(graphQLHandler()).
+		Post("/query").
+		Header("Authorization", token).
+		GraphQLQuery(query).
+		Expect(t).
+		Status(http.StatusOK).
+		Body(result).
+		End()
+}
+
+func TestDeleteBlog_Failed(t *testing.T) {
+	var blog model.Blog = getBlog()
+
+	var query string = `mutation {
+		deleteBlog(input:{
+			blogId:"` + blog.ID + `"
+		})
+	}`
+
+	var result string = `{
+		"errors": [
+			{
+				"message": "access denied",
+				"path": [
+					"deleteBlog"
+				]
+			}
+		],
+		"data": null
+	}`
+
+	apitest.New().
+		Observe(cleanup).
+		Handler(graphQLHandler()).
+		Post("/query").
+		GraphQLQuery(query).
+		Expect(t).
+		Status(http.StatusOK).
+		Body(result).
 		End()
 }

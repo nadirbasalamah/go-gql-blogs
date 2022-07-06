@@ -66,7 +66,7 @@ func GetCollection(name string) *mongo.Collection {
 }
 
 func SeedBlog() (model.Blog, error) {
-	blogFaker, err := utils.CreateFaker[utils.Blog]()
+	blogFaker, err := utils.CreateFaker[utils.BlogFaker]()
 	if err != nil {
 		return model.Blog{}, err
 	}
@@ -102,7 +102,7 @@ func SeedBlog() (model.Blog, error) {
 }
 
 func SeedUser() (model.User, error) {
-	userFaker, err := utils.CreateFaker[utils.User]()
+	userFaker, err := utils.CreateFaker[utils.UserFaker]()
 	if err != nil {
 		return model.User{}, err
 	}
@@ -133,4 +133,18 @@ func SeedUser() (model.User, error) {
 	user.ID = result.InsertedID.(primitive.ObjectID).Hex()
 
 	return user, nil
+}
+
+func CleanSeeders() {
+	var userCollection *mongo.Collection = GetCollection("users")
+	var blogCollection *mongo.Collection = GetCollection("blogs")
+
+	userErr := userCollection.Drop(context.TODO())
+	blogErr := blogCollection.Drop(context.TODO())
+
+	var isFailed bool = userErr != nil || blogErr != nil
+
+	if isFailed {
+		panic("error when deleting all data inside collection")
+	}
 }
