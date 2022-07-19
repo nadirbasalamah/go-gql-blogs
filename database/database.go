@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"os"
 	"time"
 
 	"github.com/nadirbasalamah/go-gql-blogs/graph/model"
@@ -22,12 +23,12 @@ type MongoInstance struct {
 var DB MongoInstance
 
 func Connect() error {
-	client, _ := mongo.NewClient(options.Client().ApplyURI(utils.GetValue("MONGO_URI")))
+	client, _ := mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGO_URI")))
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	err := client.Connect(ctx)
-	var db *mongo.Database = client.Database(utils.GetValue("DATABASE_NAME"))
+	var db *mongo.Database = client.Database(os.Getenv("DATABASE_NAME"))
 
 	if err != nil {
 		return err
