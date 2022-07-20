@@ -16,3 +16,25 @@ There are two branches in this repository:
 ```
 go run server.go
 ```
+
+3. If `main` branch is chosen, copy the `.env` file.
+
+```
+cp .env.example .env
+```
+
+4. Configure the MongoDB database configuration inside the `.env` file.
+
+5. Run the MongoDB database server or make sure the MongoDB database is online.
+
+6. Run the application with this command.
+
+```
+go run server.go
+```
+
+7. Test the application with this command.
+
+```
+go test
+```
