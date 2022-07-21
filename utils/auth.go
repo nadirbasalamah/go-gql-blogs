@@ -2,7 +2,6 @@ package utils
 
 import (
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -16,9 +15,9 @@ type TokenMetadata struct {
 }
 
 func GenerateNewAccessToken(userId string) (string, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
+	secret := GetValue("JWT_SECRET_KEY")
 
-	minutesCount, _ := strconv.Atoi(os.Getenv("JWT_SECRET_KEY_EXPIRE_MINUTES_COUNT"))
+	minutesCount, _ := strconv.Atoi(GetValue("JWT_SECRET_KEY_EXPIRE_MINUTES_COUNT"))
 
 	claims := jwt.MapClaims{}
 
@@ -102,5 +101,5 @@ func extractToken(r *http.Request) string {
 }
 
 func jwtKeyFunc(token *jwt.Token) (interface{}, error) {
-	return []byte(os.Getenv("JWT_SECRET_KEY")), nil
+	return []byte(GetValue("JWT_SECRET_KEY")), nil
 }
