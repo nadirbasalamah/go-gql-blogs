@@ -21,33 +21,13 @@ type MongoInstance struct {
 
 var DB MongoInstance
 
-func Connect() error {
+func Connect(dbName string) error {
 	client, _ := mongo.NewClient(options.Client().ApplyURI(utils.GetValue("MONGO_URI")))
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	err := client.Connect(ctx)
-	var db *mongo.Database = client.Database(utils.GetValue("DATABASE_NAME"))
-
-	if err != nil {
-		return err
-	}
-
-	DB = MongoInstance{
-		Client:   client,
-		Database: db,
-	}
-
-	return nil
-}
-
-func ConnectTest() error {
-	client, _ := mongo.NewClient(options.Client().ApplyURI(utils.GetValue("MONGO_URI")))
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	err := client.Connect(ctx)
-	var db *mongo.Database = client.Database(utils.GetValue("DATABASE_TEST_NAME"))
+	var db *mongo.Database = client.Database(dbName)
 
 	if err != nil {
 		return err

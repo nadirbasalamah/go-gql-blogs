@@ -6,35 +6,24 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
 	"github.com/nadirbasalamah/go-gql-blogs/database"
-	"github.com/nadirbasalamah/go-gql-blogs/graph"
-	"github.com/nadirbasalamah/go-gql-blogs/graph/generated"
-	"github.com/nadirbasalamah/go-gql-blogs/graph/middleware"
 	"github.com/nadirbasalamah/go-gql-blogs/graph/model"
 	"github.com/nadirbasalamah/go-gql-blogs/utils"
 	"github.com/steinfletcher/apitest"
 )
 
 func graphQLHandler() *chi.Mux {
-	var router *chi.Mux = chi.NewRouter()
-	router.Use(middleware.NewMiddleware())
+	var handler *chi.Mux = NewGraphQLHandler()
 
-	err := database.ConnectTest()
+	err := database.Connect(utils.GetValue("DATABASE_TEST_NAME"))
 	if err != nil {
 		log.Fatalf("Cannot connect to the test database: %v\n", err)
 	}
 
 	fmt.Println("Connected to the test database")
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
-
-	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", srv)
-
-	return router
+	return handler
 }
 
 func getJWTToken(user model.User) string {
@@ -47,7 +36,7 @@ func getJWTToken(user model.User) string {
 }
 
 func getBlog() model.Blog {
-	database.ConnectTest()
+	database.Connect(utils.GetValue("DATABASE_TEST_NAME"))
 	blog, err := database.SeedBlog()
 	if err != nil {
 		panic(err)
@@ -57,7 +46,7 @@ func getBlog() model.Blog {
 }
 
 func getUser() model.User {
-	database.ConnectTest()
+	database.Connect(utils.GetValue("DATABASE_TEST_NAME"))
 	user, err := database.SeedUser()
 	if err != nil {
 		panic(err)
@@ -90,7 +79,7 @@ func TestSignup_Success(t *testing.T) {
 }
 
 func TestLogin_Success(t *testing.T) {
-	database.ConnectTest()
+	database.Connect(utils.GetValue("DATABASE_TEST_NAME"))
 	user, err := database.SeedUser()
 	if err != nil {
 		panic(err)
